@@ -8,6 +8,15 @@
 
 <style>
 
+  .card, .folder, button {
+    touch-action: manipulation; /* Optimizes for mobile taps */
+    user-select: none; /* Prevents text selection while clicking */
+}
+button:active {
+    transform: scale(0.95); /* Visual feedback that the click worked */
+    background: #388E3C;
+  }
+  
 *{
 margin:0;
 padding:0;
