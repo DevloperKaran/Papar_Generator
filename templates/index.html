@@ -104,14 +104,97 @@ color:white;
 font-weight:bold;
 cursor:pointer;
 }
+.architect-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #1a1a1a;
+    border-bottom: 2px solid #333;
+    border-top: 4px solid #4CAF50; /* Architect accent */
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+}
 
+.header-center {
+    text-align: center;
+}
+
+.header-center h1 {
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: #4CAF50;
+    margin: 0;
+}
+
+.header-center p {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+.karan-name {
+    color: #fff;
+    font-weight: bold;
+}
+
+.heart-pulse {
+    color: #ff5252;
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+}
+
+.label {
+    display: block;
+    font-size: 9px;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.value {
+    font-size: 12px;
+    color: #fff;
+    font-family: monospace;
+}
+
+.system-status {
+    text-shadow: 0 0 5px #4CAF50;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* Adjust container height since we added a header */
+.container {
+    height: calc(100vh - 140px) !important; /* Header + Footer height */
+  }
+  
 </style>
 
 </head>
 
 
 <body>
+<div class="architect-header">
+    <div class="header-left">
+        <span class="label">STATUS:</span>
+        <span class="value system-status">SYSTEM_ACTIVE</span>
+    </div>
+    
+    <div class="header-center">
+        <h1>PAPER_GEN_OS</h1>
+        <p>DESIGNED BY <span class="karan-name">KARAN</span> <span class="heart-pulse">❤</span></p>
+    </div>
 
+    <div class="header-right">
+        <span class="label">V_BUILD:</span>
+        <span class="value">1.0.4-STABLE</span>
+    </div>
+</div>
+  
 <div class="container">
 
 <div class="column left">
