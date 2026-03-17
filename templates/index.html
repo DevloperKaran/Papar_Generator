@@ -155,103 +155,112 @@ cursor:pointer;
 
 <script>
 
-let questionBank = document.getElementById("questionBank")
-let paperArea = document.getElementById("paperArea")
+let questionBank = document.getElementById("questionBank");
+let paperArea = document.getElementById("paperArea");
+let generateBtn = document.querySelector(".footer button");
 
+// 1. OPEN FOLDER WITH LOADING STATE
+function openFolder(folder) {
+    // Visual feedback: clear bank and show loading
+    questionBank.innerHTML = "<div class='card' style='text-align:center; opacity:0.6;'>⏳ Loading Questions...</div>";
+    
+    fetch("/load/" + folder)
+        .then(res => {
+            if (!res.ok) throw new Error("Server error");
+            return res.json();
+        })
+        .then(data => {
+            questionBank.innerHTML = "";
+            
+            if (Object.keys(data).length === 0) {
+                questionBank.innerHTML = "<div class='card'>Empty folder or no .docx files found.</div>";
+                return;
+            }
 
-function openFolder(folder){
-
-fetch("/load/"+folder)
-
-.then(res=>res.json())
-
-.then(data=>{
-
-questionBank.innerHTML=""
-
-for(let id in data){
-
-let div=document.createElement("div")
-
-div.className="card"
-div.dataset.id=id
-div.innerText=data[id]
-
-div.onclick=function(){
-addQuestion(id,data[id])
+            for (let id in data) {
+                let div = document.createElement("div");
+                div.className = "card";
+                div.dataset.id = id;
+                div.innerText = data[id];
+                
+                // Add click effect
+                div.onclick = function() {
+                    addQuestion(id, data[id]);
+                    // Brief flash effect
+                    div.style.background = "#4CAF50";
+                    setTimeout(() => div.style.background = "#1e1e1e", 100);
+                };
+                questionBank.appendChild(div);
+            }
+        })
+        .catch(err => {
+            questionBank.innerHTML = "<div class='card' style='color:#ff5252;'>❌ Error: Check your Flask server</div>";
+            console.error(err);
+        });
 }
 
-questionBank.appendChild(div)
+// 2. ADD QUESTION TO NEW PAPER
+function addQuestion(id, text) {
+    let div = document.createElement("div");
+    div.className = "card paper-card";
+    div.dataset.id = id;
+    div.innerText = text;
 
+    div.onclick = function() {
+        div.remove();
+    };
+
+    paperArea.appendChild(div);
+    // Auto-scroll to bottom of paper area
+    paperArea.scrollTop = paperArea.scrollHeight;
 }
 
-})
+// 3. GENERATE PAPER (FIXES HANGING/LAG)
+function generatePaper() {
+    let ids = [];
+    document.querySelectorAll("#paperArea .card").forEach(el => {
+        ids.push(el.dataset.id);
+    });
 
+    if (ids.length === 0) {
+        alert("Add some questions to your paper first!");
+        return;
+    }
+
+    // Disable button to prevent double-clicks and lag
+    generateBtn.disabled = true;
+    generateBtn.innerText = "⏳ Generating .docx...";
+    generateBtn.style.background = "#555";
+
+    fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(r => {
+        if (!r.ok) throw new Error("Generation failed");
+        return r.blob();
+    })
+    .then(blob => {
+        let url = window.URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = "question_paper.docx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    })
+    .catch(err => {
+        alert("Failed to generate file. Is the server running?");
+    })
+    .finally(() => {
+        // Reset button
+        generateBtn.disabled = false;
+        generateBtn.innerText = "Generate Paper";
+        generateBtn.style.background = "#4CAF50";
+    });
 }
 
-
-function addQuestion(id,text){
-
-let div=document.createElement("div")
-
-div.className="card paper-card"
-div.dataset.id=id
-div.innerText=text
-
-div.onclick=function(){
-div.remove()
-}
-
-paperArea.appendChild(div)
-
-}
-
-
-function generatePaper(){
-
-let ids=[]
-
-document.querySelectorAll("#paperArea .card").forEach(el=>{
-
-ids.push(el.dataset.id)
-
-})
-
-if(ids.length===0){
-alert("Please add questions first")
-return
-}
-
-fetch("/generate",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({ids:ids})
-
-})
-
-.then(r=>r.blob())
-
-.then(blob=>{
-
-let url=window.URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-
-a.href=url
-a.download="question_paper.docx"
-
-document.body.appendChild(a)
-a.click()
-a.remove()
-
-})
-
-}
 
 </script>
 
