@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Question Paper Builder</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#121212;
+color:white;
+height:100vh;
+overflow:hidden;
+}
+
+.container{
+display:flex;
+height:calc(100vh - 70px);
+}
+
+.column{
+width:50%;
+overflow-y:auto;
+padding:10px;
+}
+
+.left{
+border-right:1px solid #333;
+}
+
+h3{
+margin-bottom:10px;
+}
+
+.folder{
+background:#1e1e1e;
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+border:1px solid #333;
+text-align:center;
+font-weight:bold;
+cursor:pointer;
+}
+
+.card{
+background:#1e1e1e;
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+border:1px solid #333;
+font-size:14px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.card:hover{
+background:#2a2a2a;
+}
+
+.paper-card{
+background:#263238;
+}
+
+.footer{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+height:70px;
+background:#1b1b1b;
+display:flex;
+justify-content:center;
+align-items:center;
+border-top:1px solid #333;
+}
+
+button{
+width:90%;
+height:50px;
+font-size:18px;
+border:none;
+border-radius:10px;
+background:#4CAF50;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+<div class="column left">
+
+<h3>Folders</h3>
+
+<div id="folderList">
+
+{% for f in folders %}
+
+<div class="folder" onclick="openFolder('{{f}}')">
+📂 {{f}}
+</div>
+
+{% endfor %}
+
+</div>
+
+<h3>Questions</h3>
+
+<div id="questionBank"></div>
+
+</div>
+
+
+<div class="column">
+
+<h3>New Paper</h3>
+
+<div id="paperArea"></div>
+
+</div>
+
+</div>
+
+
+<div class="footer">
+<button onclick="generatePaper()">Generate Paper</button>
+</div>
+
+
+<script>
+
+let questionBank = document.getElementById("questionBank")
+let paperArea = document.getElementById("paperArea")
+
+
+function openFolder(folder){
+
+fetch("/load/"+folder)
+
+.then(res=>res.json())
+
+.then(data=>{
+
+questionBank.innerHTML=""
+
+for(let id in data){
+
+let div=document.createElement("div")
+
+div.className="card"
+div.dataset.id=id
+div.innerText=data[id]
+
+div.onclick=function(){
+addQuestion(id,data[id])
+}
+
+questionBank.appendChild(div)
+
+}
+
+})
+
+}
+
+
+function addQuestion(id,text){
+
+let div=document.createElement("div")
+
+div.className="card paper-card"
+div.dataset.id=id
+div.innerText=text
+
+div.onclick=function(){
+div.remove()
+}
+
+paperArea.appendChild(div)
+
+}
+
+
+function generatePaper(){
+
+let ids=[]
+
+document.querySelectorAll("#paperArea .card").forEach(el=>{
+
+ids.push(el.dataset.id)
+
+})
+
+if(ids.length===0){
+alert("Please add questions first")
+return
+}
+
+fetch("/generate",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({ids:ids})
+
+})
+
+.then(r=>r.blob())
+
+.then(blob=>{
+
+let url=window.URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+a.download="question_paper.docx"
+
+document.body.appendChild(a)
+a.click()
+a.remove()
+
+})
+
+}
+
+</script>
+
+</body>
+  </html>
