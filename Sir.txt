@@ -1,0 +1,117 @@
+
+
+
+import os
+import tkinter as tk
+from tkinter import messagebox
+import win32com.client # This allows us to control the open Word app
+
+class QuestionGeneratorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Live Question Picker")
+        self.root.geometry("500x600")
+        
+        # Path where your Subject folders are located
+        self.base_path = "./Subjects" 
+
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(fill="both", expand=True)
+        
+        self.show_subject_folders()
+
+    def clear_frame(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+    def show_subject_folders(self):
+        self.clear_frame()
+        tk.Label(self.main_frame, text="Select Subject Folder", font=("Arial", 14, "bold")).pack(pady=20)
+        
+        if not os.path.exists(self.base_path):
+            os.makedirs(self.base_path)
+            tk.Label(self.main_frame, text="Drop folders into '/Subjects/'").pack()
+            return
+
+        folders = [f for f in os.listdir(self.base_path) if os.path.isdir(os.path.join(self.base_path, f))]
+        
+        for folder in folders:
+            btn = tk.Button(self.main_frame, text=folder, width=25, bg="#e1e1e1",
+                            command=lambda f=folder: self.show_questions(f))
+            btn.pack(pady=5)
+
+    def show_questions(self, subject):
+        self.clear_frame()
+        # Back Button at the top
+        tk.Button(self.main_frame, text="⬅ Back to Folders", command=self.show_subject_folders, fg="blue").pack(pady=10)
+
+        subject_path = os.path.join(self.base_path, subject)
+        
+        # UI setup for scrollable list
+        canvas = tk.Canvas(self.main_frame)
+        scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=canvas.yview)
+        scroll_frame = tk.Frame(canvas)
+
+        scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Import docx here just for reading the source files
+        from docx import Document
+        files = [f for f in os.listdir(subject_path) if f.endswith('.docx')]
+
+        for file in files:
+            doc = Document(os.path.join(subject_path, file))
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    q_text = para.text
+                    # Clicking this button sends text to the OPEN Word file
+                    btn = tk.Button(scroll_frame, text=q_text, wraplength=350, justify="left",
+                                    command=lambda q=q_text: self.send_to_active_word(q))
+                    btn.pack(fill="x", padx=10, pady=5)
+
+    def send_to_active_word(self, text):
+        """Finds the open Word application and pastes text at the cursor."""
+        try:
+            # Connect to the running instance of Word
+            word = win32com.client.GetActiveObject("Word.Application")
+            # Get the current selection (where your cursor is)
+            word.Selection.TypeText(text + "\n\n") 
+            # Optional: Bring Word to front (uncomment if desired)
+            # word.Visible = True
+        except Exception:
+            messagebox.showerror("Error", "No open Word document found! Please open a Word file first.")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = QuestionGeneratorApp(root)
+    root.mainloop()
+
+📝 Step-by-Step Installation Guide
+1. Install Python
+ * Go to python.org.
+ * Download the latest version for Windows.
+ * Crucial: When the installer opens, check the box that says "Add Python to PATH". Click "Install Now".
+2. Install Required Libraries
+Open your Windows Command Prompt (type cmd in the Start menu) and run these two commands one by one:
+ * pip install python-docx (to read your source folders).
+ * pip install pywin32 (to talk to the open Word file).
+3. Setup Your Folders
+ * Create a main folder on your desktop called MyGenerator.
+ * Inside that, create a folder named Subjects.
+ * Inside Subjects, make folders like Math, Science, etc., and put your .docx files there.
+ * Save the code above as main.py inside the MyGenerator folder.
+4. Create the .exe Software
+To make it a standalone laptop app:
+ * In the Command Prompt, type: pip install pyinstaller
+ * Navigate to your folder in CMD (e.g., cd Desktop/MyGenerator).
+ * Run: pyinstaller --noconsole --onefile main.py
+ * Once finished, look inside the new dist folder. Your .exe is there!
+🚦 How to Use the App
+ * Open Microsoft Word and start a new blank document.
+ * Run your new .exe program.
+ * Select a subject folder.
+ * Click any question button.
+ * Watch the magic: The text will instantly appear in the Word document you have open!
